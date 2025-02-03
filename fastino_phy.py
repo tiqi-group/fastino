@@ -1,7 +1,7 @@
 from math import gcd
 
 from migen import *
-from migen.genlib.cdc import AsyncResetSynchronizer
+from migen.genlib.cdc import AsyncResetSynchronizer, MultiReg
 
 from interpolator import Interpolator
 from frame import Frame
@@ -160,20 +160,23 @@ class Fastino(Module):
         self.submodules.int1 = ClockDomainsRenamer("spi")(Interpolator)(
             n_channels=16)
 
-        # no cdc, assume timing is synchronous and comensurate such that
-        # max data delay sys-spi < min sys-spi clock delay over all alignments
         body = Cat(
                 self.int0.en_in,
                 self.int1.en_in,
                 self.int0.x,
                 self.int1.x,
         )
-        self.sync.spi += [  # this should be comb but the stb path is long
-            self.int0.stb_in.eq(self.frame.stb),
-            self.int1.stb_in.eq(self.frame.stb),
-            body.eq(self.frame.body[-len(body):]),
-            self.int0.typ.eq(cfg_comb.typ),
-            self.int1.typ.eq(cfg_comb.typ),
+
+        stb_spi = Signal()
+        self.specials += MultiReg(self.frame.stb, stb_spi, "spi")
+
+        self.sync += If(self.frame.stb, body.eq(self.frame.body[-len(body):]))
+
+        self.comb += [
+            self.int0.stb_in.eq(stb_spi),
+            self.int1.stb_in.eq(stb_spi),
+            self.int0.typ.eq(cfg.typ),
+            self.int1.typ.eq(cfg.typ),
         ]
 
         self.submodules.spi = MultiSPI(platform)
