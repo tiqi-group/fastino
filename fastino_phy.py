@@ -1,7 +1,7 @@
 from math import gcd
 
 from migen import *
-from migen.genlib.cdc import AsyncResetSynchronizer, MultiReg
+from migen.genlib.cdc import AsyncResetSynchronizer, PulseSynchronizer
 
 from interpolator import Interpolator
 from frame import Frame
@@ -167,14 +167,14 @@ class Fastino(Module):
                 self.int1.x,
         )
 
-        stb_spi = Signal()
-        self.specials += MultiReg(self.frame.stb, stb_spi, "spi")
+        self.submodules.stb_pulse_cdc = PulseSynchronizer("sys", "spi")
 
+        self.comb += self.stb_pulse_cdc.i.eq(self.frame.stb)
         self.sync += If(self.frame.stb, body.eq(self.frame.body[-len(body):]))
 
         self.comb += [
-            self.int0.stb_in.eq(stb_spi),
-            self.int1.stb_in.eq(stb_spi),
+            self.int0.stb_in.eq(self.stb_pulse_cdc.o),
+            self.int1.stb_in.eq(self.stb_pulse_cdc.o),
             self.int0.typ.eq(cfg.typ),
             self.int1.typ.eq(cfg.typ),
         ]
