@@ -63,6 +63,19 @@ class Fastino(Module):
                 o_PACKAGE_PIN=platform.request("eem0_n", 7),
                 i_D_OUT_0=sdo),  # falling SCK
         ]
+
+        debug_out = Signal(16)
+        self.specials += [
+            Instance(
+                "SB_IO",
+                p_PIN_TYPE=C(0b010100, 6),  # output registered
+                p_IO_STANDARD="SB_LVCMOS",
+                i_OUTPUT_CLK=ClockSignal("spi"),
+                o_PACKAGE_PIN=platform.request("eem1_n" if i % 2 == 0 else "eem1_p", i//2),
+                i_D_OUT_0=debug_out[i])
+            for i in range(len(debug_out))
+        ]
+
         sr = Signal(n_frame, reset_less=True)
         # status register
         status = Signal((1 << len(adr))*len(sr))
@@ -180,6 +193,12 @@ class Fastino(Module):
             self.int0.typ.eq(cfg.typ),
             self.int1.typ.eq(cfg.typ),
         ]
+
+        self.comb += debug_out.eq(Cat(self.int0.stb_in, self.int0.typ,
+                                      self.int0.cic.ce, self.int0.cic.stb,
+                                      self.int0.cic.reset, self.int0.cic.ack,
+                                      self.int0.cic.xi))
+
 
         self.submodules.spi = MultiSPI(platform)
         assert len(body) == len(self.spi.data)
