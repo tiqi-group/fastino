@@ -67,15 +67,17 @@ class Fastino(Module):
         # status register
         status = Signal((1 << len(adr))*len(sr))
         status_ = Cat(C(0xfa, 8),  # ID
-                      platform.request("cbsel"),
-                      platform.request("sw"),
-                      platform.request("hw_rev"),
+                      platform.request("cbsel"), # 2 bits
+                      platform.request("sw"), # 2 bits
+                      platform.request("hw_rev"), # 5 bits
                       C(0, 3),  # gw version
-                      unlock,
-                      self.link.delay,
-                      self.link.align_err,
-                      self.frame.crc_err,
-                      cfg.raw_bits())
+                      unlock, # 1 bit
+                      self.link.delay, # 4 bits
+                      self.link.align_err, # 8 bits
+                      self.frame.crc_err, # 8 bits
+                      cfg.raw_bits(), # 20 bits
+                      C(0,3),
+                      C(0xaaaa5555,32))
         assert len(status_) <= len(status)
 
         self.comb += [
