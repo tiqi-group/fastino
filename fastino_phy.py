@@ -194,7 +194,7 @@ class Fastino(Module):
             self.int1.typ.eq(cfg.typ),
         ]
 
-        self.comb += debug_out.eq(Cat(self.int0.stb_in, self.int0.typ,
+        self.sync.spi += debug_out.eq(Cat(self.int0.stb_in, self.int0.typ,
                                       self.int0.cic.ce, self.int0.cic.stb,
                                       self.int0.cic.reset, self.int0.cic.ack,
                                       self.int0.cic.xi))
