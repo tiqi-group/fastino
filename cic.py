@@ -40,6 +40,8 @@ class CIC(Module):
         # clock enable, drive together with a sync clock domain CE
         self.cce = Signal(reset=1)
 
+        self.rst_integrator = Signal()
+
         ## Outputs
         # current input channel index
         self.xi = Signal(max=channels)
@@ -176,7 +178,7 @@ class CIC(Module):
             rst_sr.eq(rst),
         ]
         self.comb += [
-            rst.eq(Cat(cfg_update, rst_sr)),
+            rst.eq(Cat(self.rst_integrator | cfg_update, rst_sr)),
         ]
 
         # Data path

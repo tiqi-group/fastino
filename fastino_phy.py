@@ -40,7 +40,8 @@ class Fastino(Module):
             ("clr_err", 1),
             ("led", 8),
             ("typ", 1),
-            ("reserved", 7),
+            ("rst_integrator", 1),
+            ("reserved", 6),
         ])
         cfg_comb = Record(cfg.layout)
         unlock = Signal(reset=1)
@@ -192,6 +193,8 @@ class Fastino(Module):
             self.int1.stb_in.eq(self.stb_pulse_cdc.o),
             self.int0.typ.eq(cfg.typ),
             self.int1.typ.eq(cfg.typ),
+            self.int0.rst_integrator.eq(cfg.rst_integrator),
+            self.int1.rst_integrator.eq(cfg.rst_integrator),
         ]
 
         self.sync.spi += debug_out.eq(Cat(self.int0.stb_in, self.int0.typ,

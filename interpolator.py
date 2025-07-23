@@ -7,6 +7,7 @@ class Interpolator(Module):
                  order=3):
         self.typ = Signal()
         self.stb_in = Signal()
+        self.rst_integrator = Signal()
         self.x = [Signal(n_bits, reset_less=True) for _ in range(n_channels)]
         self.en_in = Signal(n_channels)
 
@@ -50,6 +51,7 @@ class Interpolator(Module):
             If(self.stb_in & ~cic.ce,
                 Cat(sr[:n_channels]).eq(Cat(self.x)),
                 cic.stb.eq(~self.typ),
+                cic.rst_integrator.eq(self.rst_integrator),
                 If(self.typ == 0,
                     enable[n_channels + cic.latency:2*n_channels + cic.latency].eq(
                         self.en_in),
