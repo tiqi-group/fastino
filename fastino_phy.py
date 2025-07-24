@@ -65,7 +65,7 @@ class Fastino(Module):
                 i_D_OUT_0=sdo),  # falling SCK
         ]
 
-        debug_out = Signal(16)
+        debug_out = Signal(10)
         self.specials += [
             Instance(
                 "SB_IO",
@@ -206,7 +206,8 @@ class Fastino(Module):
         self.sync.spi += debug_out.eq(Cat(self.int0.stb_in, self.int0.typ,
                                       self.int0.cic.ce, self.int0.cic.stb,
                                       self.int0.cic.reset, self.int0.cic.ack,
-                                      self.int0.cic.xi))
+                                      locked, cd_spi.rst,
+                                      cd_sys.rst, cfg.rst))
 
 
         self.submodules.spi = MultiSPI(platform)
@@ -256,6 +257,30 @@ class Fastino(Module):
                 i_OUTPUT_CLK=ClockSignal("word"),
                 #i_CLOCK_ENABLE=1,
                 o_PACKAGE_PIN=platform.request("test_point", 1),
+                i_D_OUT_0=1,
+                i_D_OUT_1=0),
+            Instance(
+                "SB_IO",
+                p_PIN_TYPE=C(0b010000, 6),  # output registered
+                p_IO_STANDARD="SB_LVCMOS",
+                i_OUTPUT_CLK=ClockSignal("spi"),
+                o_PACKAGE_PIN=platform.request("eem1_n", 5),
+                i_D_OUT_0=1,
+                i_D_OUT_1=0),
+            Instance(
+                "SB_IO",
+                p_PIN_TYPE=C(0b010000, 6),  # output registered
+                p_IO_STANDARD="SB_LVCMOS",
+                i_OUTPUT_CLK=ClockSignal("link"),
+                o_PACKAGE_PIN=platform.request("eem1_n", 6),
+                i_D_OUT_0=1,
+                i_D_OUT_1=0),
+            Instance(
+                "SB_IO",
+                p_PIN_TYPE=C(0b010000, 6),  # output registered
+                p_IO_STANDARD="SB_LVCMOS",
+                i_OUTPUT_CLK=ClockSignal("word"),
+                o_PACKAGE_PIN=platform.request("eem1_n", 7),
                 i_D_OUT_0=1,
                 i_D_OUT_1=0),
         ]
