@@ -183,14 +183,20 @@ class Fastino(Module):
                 self.int1.x,
         )
 
+        # Delay frame.stb -> stb_pulse_cdc.o
+        # sys, spi, spi -> 28 + 21 ns (if spi edge right after sys edge)
         self.submodules.stb_pulse_cdc = PulseSynchronizer("sys", "spi")
 
         self.comb += self.stb_pulse_cdc.i.eq(self.frame.stb)
         self.sync += If(self.frame.stb, body.eq(self.frame.body[-len(body):]))
 
-        self.comb += [
+        # Give frame data time to settle
+        self.sync.spi += [
             self.int0.stb_in.eq(self.stb_pulse_cdc.o),
             self.int1.stb_in.eq(self.stb_pulse_cdc.o),
+        ]
+
+        self.comb += [
             self.int0.typ.eq(cfg.typ),
             self.int1.typ.eq(cfg.typ),
             self.int0.rst_integrator.eq(cfg.rst_integrator),
