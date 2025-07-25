@@ -21,38 +21,38 @@ class CIC(Module):
         """
         ## Inputs
         # Current input sample for the given channel
-        self.x = Signal((width, True), reset_less=True)
+        self.x = Signal((width, True), reset_less=True, name="x")
         # Input sample valid
-        self.stb = Signal()
+        self.stb = Signal(name="stb")
         # Clear combs and integrators to establish new rate for current channel.
         # This re-settles the filter for the duration of `order` input samples.
         # While settling the output is marked invalid.
-        self.reset = Signal()
+        self.reset = Signal(name="reset")
         # Rate ratio is `r_output/r_input = rate + 1` for current channel
         # Only change `rate` when applying `reset` as well.
-        self.rate = Signal(rate_width)
+        self.rate = Signal(rate_width, name="rate")
         # Output right shift to compensate filter gain for current channel
         # The overall filter gain is `(rate + 1) << order`
         # gain_shift should be `ceil(order * log2(rate + 1))`
         # Thus to ensure overall gain of 1 choose rates that are powers
         # of two.
-        self.shift = Signal(max=order*rate_width + 1)
+        self.shift = Signal(max=order*rate_width + 1, name="shift")
         # clock enable, drive together with a sync clock domain CE
-        self.cce = Signal(reset=1)
+        self.cce = Signal(reset=1, name="cce")
 
-        self.rst_integrator = Signal()
+        self.rst_integrator = Signal(name="rst_integrator")
 
         ## Outputs
         # current input channel index
-        self.xi = Signal(max=channels)
+        self.xi = Signal(max=channels, name="xi")
         # input sample acknowledged
-        self.ack = Signal()
+        self.ack = Signal(name="ack")
         # output sample for given output channel
-        self.y = Signal((width, True), reset_less=True)
+        self.y = Signal((width, True), reset_less=True, name="y")
         # output channel index
-        self.yi = Signal(max=channels)
+        self.yi = Signal(max=channels, name="yi")
         # output is valid
-        self.valid = Signal()
+        self.valid = Signal(name="valid")
 
         self.latency = 2*order
         ###
@@ -61,9 +61,9 @@ class CIC(Module):
         assert log2_int(channels)
 
         # global initialization sequencer
-        clear = Signal(reset=1)
+        clear = Signal(reset=1, name="clear")
         # channel counter
-        channel = Signal(max=channels)
+        channel = Signal(max=channels, name="channel")
         self.sync += [
             channel.eq(channel + 1),
             If(channel == channels - 1,
@@ -101,9 +101,9 @@ class CIC(Module):
             layout.append(
                 ("i{}".format(n),
                 (width + order + (rate_width - 1)*(n + 1), True)))
-        read = Record(layout)
-        write = Record(layout, reset_less=True)
-        we = Signal(len(layout), reset_less=True, reset=(1 << len(layout)) - 1)
+        read = Record(layout, name="read")
+        write = Record(layout, reset_less=True, name="write")
+        we = Signal(len(layout), reset_less=True, reset=(1 << len(layout)) - 1, name="we")
 
         mem = Memory(len(read), channels)
         mem_r = mem.get_port(has_re=True)
@@ -121,9 +121,9 @@ class CIC(Module):
         ]
 
         # state flags
-        settled = Signal()
-        rate_done = Signal()
-        cfg_update = Signal()
+        settled = Signal(name="settled")
+        rate_done = Signal(name="rate_done")
+        cfg_update = Signal(name="cfg_update")
         self.comb += [
             rate_done.eq(read.i_rate == 0),
             settled.eq(read.i_settle == 0),
@@ -165,11 +165,11 @@ class CIC(Module):
         ]
 
         # shift registers to ripple along the comb and integrator stages
-        shift_sr = [Signal(max=order*rate_width + 1, reset_less=True)
-            for _ in range(self.latency)]
-        valid_sr = Signal(self.latency)
-        rst = Signal(self.latency)
-        rst_sr = Signal(self.latency - 1, reset_less=True)
+        shift_sr = [Signal(max=order*rate_width + 1, reset_less=True, name=f"shift_sr{i}")
+            for i in range(self.latency)]
+        valid_sr = Signal(self.latency, name="valid_sr")
+        rst = Signal(self.latency, name="rst")
+        rst_sr = Signal(self.latency - 1, reset_less=True, name="rst_sr")
         self.sync += [
             # no need to mux cfg_update as that sample will be marked
             # invalid anyway
@@ -203,7 +203,7 @@ class CIC(Module):
         for n in range(order):
             cr = getattr(read, "c{}".format(n))
             cw = getattr(write, "c{}".format(n))
-            z1 = Signal((len(cw) + 1, True), reset_less=True)
+            z1 = Signal((len(cw) + 1, True), reset_less=True, name=f"z1_{n}")
             self.sync += [
                 cw.eq(z),
                 z1.eq(z - cr),

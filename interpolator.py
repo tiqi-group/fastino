@@ -5,15 +5,15 @@ from cic import CIC
 class Interpolator(Module):
     def __init__(self, n_channels=16, n_bits=16, n_mantissa=6, n_exp=4,
                  order=3):
-        self.typ = Signal()
-        self.stb_in = Signal()
-        self.rst_integrator = Signal()
-        self.x = [Signal(n_bits, reset_less=True) for _ in range(n_channels)]
-        self.en_in = Signal(n_channels)
+        self.typ = Signal(name="typ")
+        self.stb_in = Signal(name="stb_in")
+        self.rst_integrator = Signal(name="rst_integrator")
+        self.x = [Signal(n_bits, reset_less=True, name=f"x_{i}") for i in range(n_channels)]
+        self.en_in = Signal(n_channels, name="en_in")
 
-        self.y = [Signal(n_bits) for _ in range(n_channels)]
-        self.en_out = Signal(n_channels)
-        self.stb_out = Signal()
+        self.y = [Signal(n_bits, name=f"y_{i}") for i in range(n_channels)]
+        self.en_out = Signal(n_channels, name="en_out")
+        self.stb_out = Signal(name="stb_out")
         msb_flip = 1  # conversion between offset-binary and twos-complement
 
         ###
@@ -23,10 +23,10 @@ class Interpolator(Module):
         self.submodules.cic = cic
         assert cic.latency < n_channels
 
-        reset = Signal(n_channels, reset_less=True)
-        enable = Signal(3*n_channels, reset_less=True)
-        sr = [Signal(n_bits, reset_less=True)
-              for _ in range(2*n_channels - cic.latency)]
+        reset = Signal(n_channels, reset_less=True, name="reset")
+        enable = Signal(3*n_channels, reset_less=True, name="enable")
+        sr = [Signal(n_bits, reset_less=True, name=f"sr_{i}")
+              for i in range(2*n_channels - cic.latency)]
 
         self.comb += [
             cic.x.eq(sr[0] ^ (msb_flip << n_bits - 1)),
