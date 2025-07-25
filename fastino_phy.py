@@ -83,14 +83,17 @@ class Fastino(Module):
                       platform.request("cbsel"), # 2 bits
                       platform.request("sw"), # 2 bits
                       platform.request("hw_rev"), # 5 bits
-                      C(0, 3),  # gw version
+                      C(1, 3),  # gw version
                       unlock, # 1 bit
                       self.link.delay, # 4 bits
                       self.link.align_err, # 8 bits
                       self.frame.crc_err, # 8 bits
                       cfg.raw_bits(), # 20 bits
                       C(0,3),
-                      C(0xaaaa5555,32))
+                      C(0xaaaa5555,32),
+                      cfg.led,
+                      C(0,24),
+                      cfg.reserved)
         assert len(status_) <= len(status)
 
         self.comb += [
@@ -202,7 +205,7 @@ class Fastino(Module):
 
         self.comb += debug_out.eq(Cat(self.int0.stb_in, self.int0.typ,
                                       self.int0.cic.ce, self.int0.cic.stb,
-                                      self.int0.cic.reset, self.int0.cic.ack,
+                                      self.int0.cic.reset, sdo,
                                       locked, cd_spi.rst,
                                       cd_sys.rst, cfg.rst))
 
