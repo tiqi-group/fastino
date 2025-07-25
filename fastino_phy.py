@@ -65,13 +65,12 @@ class Fastino(Module):
                 i_D_OUT_0=sdo),  # falling SCK
         ]
 
-        debug_out = Signal(10)
+        debug_out = Signal(10, reset_less=True)
         self.specials += [
             Instance(
                 "SB_IO",
-                p_PIN_TYPE=C(0b010100, 6),  # output registered
+                p_PIN_TYPE=C(0b011000, 6),  # output non-registered
                 p_IO_STANDARD="SB_LVCMOS",
-                i_OUTPUT_CLK=ClockSignal("spi"),
                 o_PACKAGE_PIN=platform.request("eem1_n" if i % 2 == 0 else "eem1_p", i//2),
                 i_D_OUT_0=debug_out[i])
             for i in range(len(debug_out))
@@ -154,16 +153,14 @@ class Fastino(Module):
                 p_DIVQ=divq,  # vco
                 p_FILTER_RANGE=1,
                 p_PLLOUT_SELECT="GENCLK",
-                p_ENABLE_ICEGATE=1,
-                p_DELAY_ADJUSTMENT_MODE_FEEDBACK="DYNAMIC",
-                p_FDA_FEEDBACK=0xf,
-                p_DELAY_ADJUSTMENT_MODE_RELATIVE="DYNAMIC",
-                p_FDA_RELATIVE=0xf,
+                p_ENABLE_ICEGATE=0,
+                p_DELAY_ADJUSTMENT_MODE_FEEDBACK="FIXED",
+                p_FDA_FEEDBACK=0x0,
+                p_DELAY_ADJUSTMENT_MODE_RELATIVE="FIXED",
+                p_FDA_RELATIVE=0x0,
                 i_BYPASS=0,
                 i_RESETB=~(cfg.rst | ResetSignal("word")),
-                i_DYNAMICDELAY=Cat(self.link.delay, self.link.delay_relative),
                 i_REFERENCECLK=ClockSignal("link"),
-                i_LATCHINPUTVALUE=0,
                 o_LOCK=locked,
                 o_PLLOUTGLOBAL=cd_spi.clk,
                 # o_PLLOUTCORE=,
@@ -203,7 +200,7 @@ class Fastino(Module):
             self.int1.rst_integrator.eq(cfg.rst_integrator),
         ]
 
-        self.sync.spi += debug_out.eq(Cat(self.int0.stb_in, self.int0.typ,
+        self.comb += debug_out.eq(Cat(self.int0.stb_in, self.int0.typ,
                                       self.int0.cic.ce, self.int0.cic.stb,
                                       self.int0.cic.reset, self.int0.cic.ack,
                                       locked, cd_spi.rst,
