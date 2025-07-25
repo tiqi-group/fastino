@@ -70,7 +70,7 @@ class Fastino(Module):
                       platform.request("cbsel"),
                       platform.request("sw"),
                       platform.request("hw_rev"),
-                      C(0, 3),  # gw version
+                      C(1, 3),  # gw version
                       unlock,
                       self.link.delay,
                       self.link.align_err,
