@@ -232,6 +232,15 @@ class Fastino(Module):
                 o_PACKAGE_PIN=platform.request("test_point", 1),
                 i_D_OUT_0=1,
                 i_D_OUT_1=0),
+            Instance(
+                "SB_IO",
+                p_PIN_TYPE=C(0b010000, 6),  # output registered DDR
+                p_IO_STANDARD="SB_LVCMOS",
+                i_OUTPUT_CLK=ClockSignal("spi"),
+                #i_CLOCK_ENABLE=1,
+                o_PACKAGE_PIN=platform.request("test_point", 3),
+                i_D_OUT_0=1,
+                i_D_OUT_1=0),
         ]
 
 
