@@ -94,11 +94,14 @@ class Fastino(Module):
                       cfg.led,
                       C(0,24),
                       cfg.reserved)
+        status_debug = Cat(
+                *[C(i+1, len(sr)) for i in range(1 << len(adr))]
+                )
         assert len(status_) <= len(status)
 
         self.comb += [
             cfg_comb.raw_bits().eq(self.frame.body),
-            status.eq(status_),
+            status.eq(status_debug),
             sdo.eq(sr[-1]),  # MSB first
             adr.eq(self.frame.body[len(cfg):]),
         ]
