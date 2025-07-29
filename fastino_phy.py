@@ -252,14 +252,41 @@ class Fastino(Module):
 
 
 if __name__ == "__main__":
+
+    import argparse
+    parser = argparse.ArgumentParser(prog="python3 fastino_phy.py")
+    parser.add_argument("--max_seed", type=int, help="nextpnr will try seeds from 0 to this value", default=16)
+    parser.add_argument("--parallel", action="store_true", help="Run nextpnr seed runs in parallel")
+    args = parser.parse_args()
+
     from fastino import Platform
     platform = Platform()
-    platform.toolchain.nextpnr_build_template[1:2] = [
-        "for seed in `seq 1 10`; do",
-        "echo Seed $seed",
-        ("nextpnr-ice40 {pnr_pkg_opts} --pcf {build_name}.pcf --json {build_name}.json "
-        "--asc {build_name}.txt --pre-pack {build_name}_pre_pack.py --seed $seed && break"),
-        "done"
-    ]
+    if args.parallel:
+        platform.toolchain.nextpnr_build_template[1:3] = [
+            "rm -f success_job*",
+            "echo \"Starting place and route\"",
+            ("parallel -i "
+            "bash -c "
+            "\"nextpnr-ice40 {pnr_pkg_opts} --pcf {build_name}.pcf --json {build_name}.json "
+            "--asc {build_name}{{}}.txt --pre-pack {build_name}_pre_pack.py --seed {{}} --log build_log{{}}.txt --quiet &> /dev/null "
+            "&& touch success_job{{}}\" "
+            f"-- `seq 0 {int(args.max_seed)}` "
+             '|| echo "Some jobs failed"'),
+            "echo \"Finished place and route\"",
+            "for file in success_job*; do",
+            'echo "Seed ${{file:11}} succeeded"',
+            "icepack {build_name}${{file:11}}.txt {build_name}.bin && exit 0",
+            "done",
+            'echo "All seeds failed, please check build logs"',
+            "exit 1"
+        ]
+    else:
+        platform.toolchain.nextpnr_build_template[1:2] = [
+            f"for seed in `seq 0 {int(args.max_seed)}`; do",
+            ("nextpnr-ice40 {pnr_pkg_opts} --pcf {build_name}.pcf --json {build_name}.json "
+            "--asc {build_name}.txt --pre-pack {build_name}_pre_pack.py --seed $seed && break"),
+            "done"
+        ]
+
     fastino = Fastino(platform)
     platform.build(fastino, build_name="fastino")
