@@ -24,8 +24,7 @@ class Interpolator(Module):
 
         reset = Signal(n_channels, reset_less=True)
         enable = Signal(3*n_channels, reset_less=True)
-        sr = [Signal(n_bits, reset_less=True)
-              for _ in range(2*n_channels - cic.latency)]
+        sr = [Signal(n_bits) for _ in range(2*n_channels - cic.latency)]
 
         self.comb += [
             cic.x.eq(sr[0] ^ (msb_flip << n_bits - 1)),
