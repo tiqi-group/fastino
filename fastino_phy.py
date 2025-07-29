@@ -44,6 +44,7 @@ class Fastino(Module):
         ])
         cfg_comb = Record(cfg.layout)
         unlock = Signal(reset=1)
+        spi_clk_unlocked_latch = Signal()
 
         # slow MISO lane, TBD
         sdo = Signal()
@@ -75,7 +76,8 @@ class Fastino(Module):
                       self.link.delay,
                       self.link.align_err,
                       self.frame.crc_err,
-                      cfg.raw_bits())
+                      cfg.raw_bits(),
+                      spi_clk_unlocked_latch)
         assert len(status_) <= len(status)
 
         self.comb += [
@@ -178,6 +180,11 @@ class Fastino(Module):
             self.int1.stb_in.eq(self.stb_pulse_cdc.o),
         ]
 
+        self.sync.spi += [
+                If(self.stb_pulse_cdc.o & cfg.clr_err, spi_clk_unlocked_latch.eq(0)),
+                If(~locked, spi_clk_unlocked_latch.eq(1))
+        ]
+
         self.comb += [
             self.int0.typ.eq(cfg.typ),
             self.int1.typ.eq(cfg.typ),
@@ -210,7 +217,7 @@ class Fastino(Module):
             #platform.request("test_point", 4).eq(self.frame.stb),
             Cat(platform.request("user_led", i) for i in range(9)).eq(Cat(
                 cfg.led,
-                ResetSignal("spi") | have_align_err | have_crc_err,  # RED
+                ResetSignal("spi") | have_align_err | have_crc_err | spi_clk_unlocked_latch,  # RED
             )),
         ]
         self.specials += [
