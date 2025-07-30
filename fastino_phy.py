@@ -44,7 +44,7 @@ class Fastino(Module):
         ])
         cfg_comb = Record(cfg.layout)
         unlock = Signal(reset=1)
-        spi_clk_unlocked_latch = Signal()
+        spi_clk_unlocked_latch = Signal(reset=1)
 
         # slow MISO lane, TBD
         sdo = Signal()
