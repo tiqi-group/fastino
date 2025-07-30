@@ -77,7 +77,9 @@ class Fastino(Module):
                       self.link.align_err,
                       self.frame.crc_err,
                       cfg.raw_bits(),
-                      spi_clk_unlocked_latch)
+                      spi_clk_unlocked_latch,
+                      C(0,2),
+                      C(0xfa571140, 32))
         assert len(status_) <= len(status)
 
         self.comb += [
